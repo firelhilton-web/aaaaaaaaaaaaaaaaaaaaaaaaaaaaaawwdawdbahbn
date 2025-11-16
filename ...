@@ -22,7 +22,7 @@ getgenv().quillo = {
         },
         ['Smoothing'] = {
             ['Enabled'] = true,
-            ['Factor'] = 2.1,
+            ['Factor'] = 0.0,
             ['Easing'] = {
                 ['Style'] = 'Linear',
                 ['Direction'] = 'Out',
@@ -48,11 +48,6 @@ getgenv().quillo = {
     ['RapidFire'] = {
         ['Enabled'] = false,
         ['Keybind'] = Enum.KeyCode.R,
-    },
-    ['Triggerbot'] = {
-        ['Enabled'] = false,
-        ['Keybind'] = Enum.KeyCode.T,
-        ['Delay'] = 0.1,
     },
     ['Movement'] = {
         ['Walkspeed'] = {
@@ -149,15 +144,6 @@ RunService.RenderStepped:Connect(function()
     else
         Dot.Visible = false
         Line.Visible = false
-    end
-end)
-
-local lastClick = 0
-local trigEnabled = getgenv().quillo['Triggerbot']['Enabled']
-UserInputService.InputBegan:Connect(function(input)
-    if input.KeyCode == getgenv().quillo['Triggerbot']['Keybind'] then
-        trigEnabled = not trigEnabled
-        getgenv().quillo['Triggerbot']['Enabled'] = trigEnabled
     end
 end)
 
