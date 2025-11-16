@@ -2,7 +2,7 @@ local repo = 'https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main
 local Library = loadstring(game:HttpGet(repo .. 'Library.lua'))()
 local ThemeManager = loadstring(game:HttpGet(repo .. 'addons/ThemeManager.lua'))()
 local SaveManager = loadstring(game:HttpGet(repo .. 'addons/SaveManager.lua'))()
-local Window = Library:CreateWindow({ Title = '                     $ PrivateSanchez.lol | BETA $ .GG/TUSMUERTOS                    ', AutoShow = true, TabPadding = 15, MenuFadeTime = 0.2 })
+local Window = Library:CreateWindow({ Title = '                     $ PrivateSanchez.lol | Beta $ .GG/Tusmuertos                    ', AutoShow = true, TabPadding = 15, MenuFadeTime = 0.2 })
 local Tabs = { Main = Window:AddTab('Main'), Character = Window:AddTab('Character'), Visuals = Window:AddTab('Visuals'), Misc = Window:AddTab('Misc'), Players = Window:AddTab('Players'), ['UI Settings'] = Window:AddTab('UI Settings') }
 local GunMods = Tabs.Main:AddRightGroupbox('Gun Mods')
 local KillAura = Tabs.Main:AddRightGroupbox('Combat')
@@ -585,10 +585,10 @@ end)
 
 local killSayEnabled = false
 local killSayMessages = {
-    "thisprivity.lol is a free script and u die to it..", 
-    "Must be hard without thisprivity.lol 💔", 
-    "Why aim when thisprivity.lol does it for you?",
-    "Bros not on thisprivity.lol already 😂",
+    "PrivateSanchez.lol is a free script and u die to it..", 
+    "Must be hard without PrivateSanchez.lol 💔", 
+    "Why aim when PrivateSanchez.lol does it for you?",
+    "Bros not on PrivateSanchez.lol already 😂",
     "Cant be me icl",
     "cant win a hvh? maybe try /madlolhvh",
     "if u wanna win hop in /madlolhvh",
