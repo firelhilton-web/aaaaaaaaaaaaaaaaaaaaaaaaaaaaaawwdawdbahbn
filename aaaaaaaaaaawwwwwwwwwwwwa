@@ -9,157 +9,7 @@ local ReplicatedStorage = game:GetService('ReplicatedStorage')
 local Camera = workspace.CurrentCamera
 local Workspace = game:GetService('Workspace')
 
---// drawing frames will get dtc ifi  used cause game:getservice is dtc :morai:
-local FOVCircle = Drawing.new('Circle')
-FOVCircle.Filled = false
-
-local Line = Drawing.new('Line')
-Line.Thickness = 1
-Line.Transparency = 1
-
-local Dot = Drawing.new('Circle')
-Dot.Radius = 4
-Dot.Filled = true
-Dot.Transparency = 1
-
---//
-local function GetClosestTarget()
-    local Closest, ClosestDist = nil, math.huge
-    local MousePos = UserInputService:GetMouseLocation()
-
-    for _, Player in ipairs(Players:GetPlayers()) do
-        if Player ~= LocalPlayer and Player.Character then
-            local Part = Player.Character:FindFirstChild(
-                getgenv().quillo['Silentaim']['Target']['Part']
-            )
-            local Hum = Player.Character:FindFirstChild('Humanoid')
-            if Part and Hum and Hum.Health > 0 then
-                local ScreenPos, Visible =
-                    Camera:WorldToViewportPoint(Part.Position)
-                local Dist = (MousePos - Vector2.new(ScreenPos.X, ScreenPos.Y)).Magnitude
-                if
-                    Visible
-                    and Dist < getgenv().quillo['Silentaim']['FOV']['Radius']
-                    and Dist < ClosestDist
-                then
-                    Closest = Player
-                    ClosestDist = Dist
-                end
-            end
-        end
-    end
-    return Closest
-end
-
-
-RunService.RenderStepped:Connect(function()
-    local cfg = getgenv().quillo['Silentaim']['FOV']
-    FOVCircle.Visible = cfg['Enabled']
-    FOVCircle.Color = cfg['Color']
-    FOVCircle.Thickness = cfg['Thickness']
-    FOVCircle.Transparency = cfg['Transparency']
-    FOVCircle.Position = UserInputService:GetMouseLocation()
-    FOVCircle.Radius = cfg['Radius']
-end)
-
-RunService.RenderStepped:Connect(function()
-    local target = GetClosestTarget()
-    if target and getgenv().quillo['Visuals']['Highlight'] then
-        local part = target.Character:FindFirstChild(
-            getgenv().quillo['Silentaim']['Target']['Part']
-        )
-        if part then
-            local predicted = part.Position
-                + part.Velocity
-                    * getgenv().quillo['Silentaim']['Prediction']
-            local screenPos, onScreen = Camera:WorldToViewportPoint(predicted)
-
-            Dot.Visible = getgenv().quillo['Visuals']['Dot']
-            Dot.Position = Vector2.new(screenPos.X, screenPos.Y)
-
-            Line.Visible = getgenv().quillo['Visuals']['Line']
-            Line.From = UserInputService:GetMouseLocation()
-            Line.To = Vector2.new(screenPos.X, screenPos.Y)
-        end
-    else
-        Dot.Visible = false
-        Line.Visible = false
-    end
-end)
-
-RunService.RenderStepped:Connect(function()
-    if not trigEnabled then
-        return
-    end
-
-    local closestPlayer = nil
-    local closestDistance = math.huge
-    local mousePos = UserInputService:GetMouseLocation()
-
-    for _, player in ipairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character then
-            local hum = player.Character:FindFirstChild('Humanoid')
-            local part = player.Character:FindFirstChild('Head')
-            if hum and part and hum.Health > 0 then
-                local predicted = part.Position
-                    + part.Velocity
-                        * getgenv().quillo['Silentaim']['Prediction']
-                local screenPos, onScreen =
-                    Camera:WorldToViewportPoint(predicted)
-                if onScreen then
-                    local distance = (mousePos - Vector2.new(
-                        screenPos.X,
-                        screenPos.Y
-                    )).Magnitude
-                    if distance < 15 and distance < closestDistance then
-                        closestPlayer = player
-                        closestDistance = distance
-                    end
-                end
-            end
-        end
-    end
-
-    if
-        closestPlayer
-        and tick() - lastClick >= getgenv().quillo['Triggerbot']['Delay']
-    then
-        mouse1click()
-        lastClick = tick()
-    end
-end)
-
-local rapidEnabled = getgenv().quillo['RapidFire']['Enabled']
-UserInputService.InputBegan:Connect(function(input)
-    if input.KeyCode == getgenv().quillo['RapidFire']['Keybind'] then
-        rapidEnabled = not rapidEnabled
-        getgenv().quillo['RapidFire']['Enabled'] = rapidEnabled
-    end
-end)
-
-task.spawn(function()
-    while true do
-        task.wait()
-        if rapidEnabled then
-            local tool = LocalPlayer.Character
-                and LocalPlayer.Character:FindFirstChildOfClass('Tool')
-            if tool and tool:FindFirstChild('GunScript') then
-                for _, c in pairs(getconnections(tool.Activated)) do
-                    if c.Function then
-                        for i = 1, debug.getinfo(c.Function).nups do
-                            if
-                                type(debug.getupvalue(c.Function, i))
-                                == 'number'
-                            then
-                                debug.setupvalue(c.Function, i, 1e-20)
-                            end
-                        end
-                    end
-                end
-            end
-        end
-    end
-end)
+--// Movement
 
 local moveEnabled = false
 local moveKey = getgenv().quillo['Movement']['Walkspeed']['Keybind']
@@ -189,99 +39,6 @@ local LP = Players.LocalPlayer
 
 local UIS = game:GetService('UserInputService')
 local RS = game:GetService('RunService')
-
-local AimbotActive = false
-local Target = nil
-
-local function ApplyPrediction(player)
-    if getgenv().quillo.Aimbot.Prediction.Enabled then
-        local HRP = player.Character
-            and player.Character:FindFirstChild('HumanoidRootPart')
-        local Velocity = HRP and HRP.Velocity or Vector3.zero
-
-        local Xoffset = getgenv().quillo.Aimbot.Prediction.Xaxis
-        local Yoffset = getgenv().quillo.Aimbot.Prediction.Yaxis
-
-        return Vector3.new(
-            Velocity.X * Xoffset,
-            Velocity.Y * Yoffset,
-            Velocity.Z * Xoffset
-        )
-    end
-
-    return Vector3.zero
-end
-
-local function GetClosestPlayer()
-    local closest, shortest = nil, math.huge
-    for _, plr in pairs(Players:GetPlayers()) do
-        if
-            plr ~= LP
-            and plr.Character
-            and plr.Character:FindFirstChild('HumanoidRootPart')
-        then
-            local screenPos, onScreen = Camera:WorldToViewportPoint(
-                plr.Character.HumanoidRootPart.Position
-            )
-            if onScreen then
-                local mousePos = UIS:GetMouseLocation()
-                local distance = (
-                    Vector2.new(screenPos.X, screenPos.Y) - mousePos
-                ).Magnitude
-                if distance < shortest then
-                    shortest = distance
-                    closest = plr
-                end
-            end
-        end
-    end
-    return closest
-end
-
-RS.RenderStepped:Connect(function()
-    if
-        getgenv().quillo.Aimbot.Enabled
-        and AimbotActive
-        and Target
-        and Target.Character
-    then
-        local part =
-            Target.Character:FindFirstChild(getgenv().quillo.Aimbot.TargetPart)
-        if part then
-            local campos = Camera.CFrame.Position
-            local prediction = ApplyPrediction(Target) + part.Position
-            local aimDirection = (prediction - campos).Unit
-            local newLookVector =
-                Camera.CFrame.LookVector:Lerp(aimDirection, 0.2)
-            local newCFrame = CFrame.new(campos, campos + newLookVector)
-            Camera.CFrame = newCFrame
-        end
-    end
-end)
-
-UIS.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then
-        return
-    end
-    local bind = getgenv().quillo.Aimbot.Smoothing.Binding
-    if bind.ToggleMode == 'Keyboard' and input.KeyCode == bind.Keybind then
-        if bind.Type == 'Toggle' then
-            AimbotActive = not AimbotActive
-            Target = AimbotActive and GetClosestPlayer() or nil
-        elseif bind.Type == 'Hold' then
-            AimbotActive = true
-            Target = GetClosestPlayer()
-        end
-    end
-end)
-
-UIS.InputEnded:Connect(function(input)
-    local bind = getgenv().quillo.Aimbot.Smoothing.Binding
-    if bind.Type == 'Hold' and input.KeyCode == bind.Keybind then
-        AimbotActive = false
-        Target = nil
-    end
-end)
 
 local LocalPlr = game.Players.LocalPlayer
 local RunService = game:GetService('RunService')
@@ -377,7 +134,8 @@ end)
 
 RunService.Heartbeat:Connect(updateNetworkedPosition)
 
--- Spread Modifier
+-- Spread Modifier (dynamic)
+
 local function _0xdecode(s)
     local b = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
     local d = ''
@@ -539,6 +297,32 @@ end)() -- 300
 local _0x52a0d5 = { BulletSpread = { Enabled = true, Amount = _0xn9 } }
 local _0x9ba38e
 
+-- Sync `_0x52a0d5` with `getgenv().quillo['Gun modifications']['Spread Modifier']` periodically
+task.spawn(function()
+    local prevEnabled = _0x52a0d5.BulletSpread.Enabled
+    local prevAmount = _0x52a0d5.BulletSpread.Amount
+    while true do
+        task.wait(0.5)
+        local cfg = (getgenv().quillo and getgenv().quillo['Gun modifications'] and getgenv().quillo['Gun modifications']['Spread Modifier']) or nil
+        local enabledNow = (cfg and cfg.Enable ~= nil) and cfg.Enable or prevEnabled
+        local amountNow = (cfg and cfg.Amount ~= nil) and cfg.Amount or prevAmount
+        if enabledNow ~= prevEnabled then
+            prevEnabled = enabledNow
+            _0x52a0d5.BulletSpread.Enabled = enabledNow
+            pcall(function()
+                print('[SpreadSync] Enabled changed to', tostring(enabledNow))
+            end)
+        end
+        if amountNow ~= prevAmount then
+            prevAmount = amountNow
+            _0x52a0d5.BulletSpread.Amount = amountNow
+            pcall(function()
+                print('[SpreadSync] Amount changed to', tostring(amountNow))
+            end)
+        end
+    end
+end)
+
 _0x9ba38e = hookfunction(math.random, function(...)
     local _0x5e1a0d = { ... }
     if checkcaller() then
@@ -550,9 +334,12 @@ _0x9ba38e = hookfunction(math.random, function(...)
         or (_0x5e1a0d[_0xn8] == _0xn15)
         or (_0x5e1a0d[_0xn8] == _0xn16)
     then
-        if _0x52a0d5.BulletSpread.Enabled then
-            return _0x9ba38e(...) * (_0x52a0d5.BulletSpread.Amount / _0xn1)
-        end
+        local curSpreadCfg = (getgenv().quillo and getgenv().quillo['Gun modifications'] and getgenv().quillo['Gun modifications']['Spread Modifier']) or nil
+        local enabledNow = (curSpreadCfg and curSpreadCfg.Enable ~= nil) and curSpreadCfg.Enable or _0x52a0d5.BulletSpread.Enabled
+        if enabledNow then
+                local amountNow = (curSpreadCfg and curSpreadCfg.Amount) or _0x52a0d5.BulletSpread.Amount or _0xn9
+                return _0x9ba38e(...) * (amountNow / _0xn1)
+            end
     end
     return _0x9ba38e(...)
 end)
